@@ -6,23 +6,21 @@ var HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const modelPath = path.resolve(__dirname, '..', 'src', 'models');
 
-
 function getModel(modelPath) {
     var models = [];
 
     return new Promise((resolve, reject) => {
         fs.readdir(modelPath, function (err, files) {
-          if (err) {
-            print.warn('木有没有文件');
-            reject([]);
-          }
-          files.forEach(function(filename){
-              console.log(modelPath + "/" + filename);
-              const res = filename.split(".");
-              console.log(res[0]);
-              models.push(res[0]);
-          });
-          resolve(models);
+            if (err) {
+                print.warn('没有model模块，请添加！');
+                resolve([]);
+            } else {
+                files.forEach(function(filename){
+                    const res = filename.split(".");
+                    models.push(res[0]);
+                });
+                resolve(models);
+            }
         });
     })
 }
@@ -31,7 +29,7 @@ async function renderWebpack() {
     var webpack = require("webpack");
 
     const models = await getModel(modelPath);
-    console.log(models);
+    // console.log(models);
     var webpack = {
       mode: "development",
       resolve: {
@@ -67,21 +65,12 @@ async function renderWebpack() {
             }
           },
           ...rules,
-          // {
-          //   test: /\.html$/,
-          //   use: [
-          //     {
-          //       loader: "html-loader"
-          //     }
-          //   ]
-          // }
         ]
       },
       target: "web",
       plugins: [
         new webpack.DefinePlugin({
             'process.env': 'dev',
-            IS_DEV: JSON.stringify(false),
             MODELS: JSON.stringify(models),
         }),
         new HtmlWebpackPlugin({
@@ -91,14 +80,21 @@ async function renderWebpack() {
            inject: true,
            hash: true,
            mountPoint: '<div id="root"></div>',
-           // value: '23',
            template: path.resolve('.', 'public', 'index.html')  // 模板
         })
       ],
       devServer: {
         contentBase: path.join(__dirname, "dist"),
         compress: true,
-        port: 9000
+        port: 9000,
+        // host: 'localhost',
+        proxy: {
+            '/airwallex': {
+                changeOrigin:true,
+                target: 'https://l94wc2001h.execute-api.ap-southeast-2.amazonaws.com',
+                pathRewrite: {'^/api' : ''}
+            }
+        }
       }
     };
     return webpack;

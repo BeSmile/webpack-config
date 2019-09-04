@@ -98,12 +98,7 @@ var webpackConfig = {
        // value: '23',
        template: path.resolve('.', 'public', 'index.html')  // 模板
     })
-  ],
-  devServer: {
-    contentBase: path.join(__dirname, "dist"),
-    compress: true,
-    port: 9000
-  }
+  ]
 };
 
 rm('../dist', function(err) {
