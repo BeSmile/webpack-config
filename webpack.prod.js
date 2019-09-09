@@ -1,34 +1,32 @@
-var path = require("path");
-var rm = require("rimraf");
-var print = require("./lib/print.js");
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+var HtmlWebpackPlugin = require("html-webpack-plugin");
+var WebpackChunkHash = require("webpack-chunk-hash");
 var rules = require("./lib/rule.js");
 var webpack = require("webpack");
-const Ora = require('ora');
 const chalk = require('chalk');
+var path = require("path");
+var rm = require("rimraf");
+const ora = require('ora');
 
-const spinner = new Ora({
-	text: 'Loading unicorns',
+const spinner = new ora({
+	text: 'start building',
 	spinner: process.argv[2]
 });
 
-var WebpackChunkHash = require("webpack-chunk-hash");
-
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
-
-print.warn(path.resolve(__dirname, '..', "src/"));
-console.log(process.env.NODE_ENV);
-var HtmlWebpackPlugin = require("html-webpack-plugin");
 var webpackConfig = {
   mode: "production",
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
-    alias: {
-      '@src': path.resolve(__dirname, '..', "src/"),
-      '@public': path.resolve(__dirname, '..', "public/"),
-    },
+	alias: {
+	  '@src': path.resolve(__dirname, '..', "src/"),
+	  '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
+	  '@components': path.resolve(__dirname, '..', 'src', "components/"),
+	  '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
+	  '@public': path.resolve(__dirname, '..', "public/"),
+	},
   },
   entry: {
-    app: path.resolve(__dirname, '..','index.js')
+	app: path.resolve(__dirname, '..', 'src','index.js')
   },
   output: {
       path: path.resolve(__dirname, '..', 'dist'), // 输出的路径
@@ -99,23 +97,27 @@ var webpackConfig = {
        template: path.resolve('.', 'public', 'index.html')  // 模板
     })
   ],
-  devServer: {
-    contentBase: path.join(__dirname, "dist"),
-    compress: true,
-    port: 9000
-  }
 };
+
+// const spinner = ora('start building');
+
+spinner.text = 'cleaning dist folder';
 
 rm('../dist', function(err) {
   if (!err) {
-    print.success("rm dist success");
+    spinner.succeed('cleaned dist folder success');
+
+	spinner.text = 'building';
+	spinner.start();
+
     webpack(webpackConfig, function(err, status) {
+		// console.log(err, status);
       if (!err) {
-        print.success("build success")
+		  spinner.succeed(`build dist success. the output path:${path.resolve(__dirname, '..', 'dist')}`);
       }
     })
   } else {
-    print.error('build failed', err)
+    spinner.fail('rm dist error');
   }
 })
-// module.exports = webpackConfig;
+module.exports = webpackConfig;

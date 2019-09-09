@@ -1,11 +1,9 @@
 var path = require("path");
 var fs = require('fs')
-var print = require("./lib/print.js");
 var rules = require("./lib/rule.js");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const modelPath = path.resolve(__dirname, '..', 'src', 'models');
-
 
 function getModel(modelPath) {
     var models = [];
@@ -13,13 +11,10 @@ function getModel(modelPath) {
     return new Promise((resolve, reject) => {
         fs.readdir(modelPath, function (err, files) {
           if (err) {
-            print.warn('木有没有文件');
-            reject([]);
+            resolve([]);
           }
           files.forEach(function(filename){
-              console.log(modelPath + "/" + filename);
               const res = filename.split(".");
-              console.log(res[0]);
               models.push(res[0]);
           });
           resolve(models);
@@ -31,18 +26,20 @@ async function renderWebpack() {
     var webpack = require("webpack");
 
     const models = await getModel(modelPath);
-    console.log(models);
     var webpack = {
       mode: "development",
       resolve: {
         extensions: ['.js', '.jsx', '.json'],
         alias: {
           '@src': path.resolve(__dirname, '..', "src/"),
+          '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
+          '@components': path.resolve(__dirname, '..', 'src', "components/"),
+          '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
           '@public': path.resolve(__dirname, '..', "public/"),
         },
       },
       entry: {
-        app: path.resolve(__dirname, '../src','index.js')
+        app: path.resolve(__dirname, '..', 'src','index.js')
       },
       output: {
           path: path.resolve(__dirname, '.', 'dist'), // 输出的路径
