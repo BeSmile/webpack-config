@@ -1,8 +1,14 @@
 var path = require("path");
 var fs = require('fs')
-var { getRule } = require("./lib/rule.js");
+var {
+    getRule
+} = require("./lib/rule.js");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
-const { CheckerPlugin } = require('awesome-typescript-loader');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+const {
+    CheckerPlugin
+} = require('awesome-typescript-loader');
 
 
 const tsLoader = process.argv.includes('ts-loader');
@@ -24,6 +30,7 @@ function getModel(modelPath) {
         });
     })
 }
+console.log(path.resolve(__dirname, '..', 'src', "utils/"));
 async function renderWebpack() {
     var webpack = require("webpack");
 
@@ -37,11 +44,12 @@ async function renderWebpack() {
                 '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
                 '@components': path.resolve(__dirname, '..', 'src', "components/"),
                 '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
+                '@utils': path.resolve(__dirname, '..', 'src', "utils/"),
                 '@public': path.resolve(__dirname, '..', "public/"),
             },
         },
         entry: {
-            app: path.resolve(__dirname, '..', 'src', tsLoader?'index.tsx':'index.js')
+            app: path.resolve(__dirname, '..', 'src', tsLoader ? 'index.tsx' : 'index.js')
         },
         output: {
             path: path.resolve(__dirname, '.', 'dist'), // 输出的路径
@@ -61,14 +69,18 @@ async function renderWebpack() {
         },
         devtool: 'source-map',
         module: {
-            rules: [{
+            rules: [
+                ...getRule({
+                    ts: tsLoader
+                }),
+                {
                     test: /\.(js|jsx)$/,
                     exclude: /node_modules/,
                     use: {
                         loader: "babel-loader"
                     }
                 },
-                ...getRule(tsLoader),
+
                 // {
                 //   test: /\.html$/,
                 //   use: [
@@ -101,7 +113,11 @@ async function renderWebpack() {
             contentBase: path.join(__dirname, "dist"),
             compress: true,
             port: 9000
-        }
+        },
+        // externals: {
+        //     "react": 'react',
+        //     'react-dom': 'ReactDOM'
+        // }
     };
     return webpack;
 }
