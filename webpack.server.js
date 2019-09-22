@@ -24,7 +24,6 @@ function getModel(modelPath) {
         });
     })
 }
-
 async function renderWebpack() {
     var webpack = require("webpack");
 
@@ -42,7 +41,7 @@ async function renderWebpack() {
             },
         },
         entry: {
-            app: path.resolve(__dirname, '..', 'src', 'index.tsx')
+            app: path.resolve(__dirname, '..', 'src', tsLoader?'index.tsx':'index.js')
         },
         output: {
             path: path.resolve(__dirname, '.', 'dist'), // 输出的路径
