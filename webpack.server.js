@@ -4,10 +4,9 @@ var { getRule } = require("./lib/rule.js");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CheckerPlugin } = require('awesome-typescript-loader');
 
-
 const tsLoader = process.argv.includes('ts-loader');
-const modelPath = path.resolve(__dirname, '..', 'src', 'models');
 
+const modelPath = path.resolve(__dirname, '..', 'src', 'models');
 function getModel(modelPath) {
     var models = [];
 
@@ -38,6 +37,9 @@ async function renderWebpack() {
                 '@components': path.resolve(__dirname, '..', 'src', "components/"),
                 '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
                 '@public': path.resolve(__dirname, '..', "public/"),
+                '@utils': path.resolve(__dirname, '..', 'src', "utils/"),
+                '@layouts': path.resolve(__dirname, '..', 'src', "layouts/"),
+
             },
         },
         entry: {
@@ -61,14 +63,10 @@ async function renderWebpack() {
         },
         devtool: 'source-map',
         module: {
-            rules: [{
-                    test: /\.(js|jsx)$/,
-                    exclude: /node_modules/,
-                    use: {
-                        loader: "babel-loader"
-                    }
-                },
-                ...getRule(tsLoader),
+            rules: [
+                ...getRule({
+                    ts: tsLoader,
+                }),
                 // {
                 //   test: /\.html$/,
                 //   use: [
@@ -82,8 +80,11 @@ async function renderWebpack() {
         target: "web",
         plugins: [
             new webpack.DefinePlugin({
-                ENV_PATH: JSON.stringify(false),
-                MODELS_PATH: JSON.stringify(models),
+                'process.env': {
+
+                },
+                __ENV_PATH__: JSON.stringify(false),
+                __MODELS_PATH__: JSON.stringify(models),
             }),
             // new CheckerPlugin(),
             new HtmlWebpackPlugin({
@@ -92,6 +93,7 @@ async function renderWebpack() {
                 filename: 'index.html',
                 inject: true,
                 hash: true,
+                title: 'im小站',
                 mountPoint: '<div id="root"></div>',
                 // value: '23',
                 template: path.resolve('.', 'public', 'index.html') // 模板
@@ -100,7 +102,8 @@ async function renderWebpack() {
         devServer: {
             contentBase: path.join(__dirname, "dist"),
             compress: true,
-            port: 9000
+            port: 9000,
+            historyApiFallback: true,
         }
     };
     return webpack;
