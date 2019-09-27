@@ -33,7 +33,6 @@ async function renderWebpack() {
             // new InlineManifestWebpackPlugin('chunk-manifest.json'),// 重命名 manifest json
         ]
     });
-    console.log(webpackConfig);
     return webpackConfig;
 }
 module.exports = renderWebpack;
