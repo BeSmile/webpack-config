@@ -1,123 +1,59 @@
+var InlineManifestWebpackPlugin = require("inline-manifest-webpack-plugin");
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+var ManifestPlugin = require('webpack-manifest-plugin');
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 var HtmlWebpackPlugin = require("html-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin')
 var WebpackChunkHash = require("webpack-chunk-hash");
-var rules = require("./lib/rule.js");
+var baseWebpackConfig = require('./webpack.base');
+var merge = require('webpack-merge');
 var webpack = require("webpack");
-const chalk = require('chalk');
 var path = require("path");
 var rm = require("rimraf");
 const ora = require('ora');
 
+const distPath = path.resolve(__dirname, '..', 'dist');
 const spinner = new ora({
-	text: 'start building',
-	spinner: process.argv[2]
+    text: 'start building',
+    // spinner: process.argv[2]
 });
-
-var webpackConfig = {
-  mode: "production",
-  resolve: {
-    extensions: ['.js', '.jsx', '.json'],
-	alias: {
-	  '@src': path.resolve(__dirname, '..', "src/"),
-	  '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
-	  '@components': path.resolve(__dirname, '..', 'src', "components/"),
-	  '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
-	  '@public': path.resolve(__dirname, '..', "public/"),
-	},
-  },
-  entry: {
-	app: path.resolve(__dirname, '..', 'src','index.js')
-  },
-  output: {
-      path: path.resolve(__dirname, '..', 'dist'), // 输出的路径
-      filename: '[name]-[chunkhash].js',
-      // publicPath: "/assets/",
-      library: 'APP',
-      libraryTarget: 'window',
-  },
-
-  devtool: 'source-map',
-  module: {
-    rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      },
-      ...rules,
-      // {
-      //   test: /\.html$/,
-      //   use: [
-      //     {
-      //       loader: "html-loader"
-      //     }
-      //   ]
-      // }
-    ]
-  },
-  target: "web",
-  optimization: {
-     minimizer: [
-        new UglifyJSPlugin({
-            uglifyOptions: {
-                output: {
-                    comments: false
+async function renderWebpack() {
+    var config = await baseWebpackConfig();
+    var webpackConfig = merge(config, {
+        mode: "production",
+        devtool: 'inline-source-map',
+        plugins: [
+            ...config.plugins,
+            // new HardSourceWebpackPlugin(), // 提升加载速度,为模块提供中间缓存步骤
+            new WebpackChunkHash(),
+            new ManifestPlugin(),
+            new TerserPlugin({
+                parallel: true,
+                terserOptions: {
+                    ecma: 6,
                 },
-                compress: {
-                    // warnings: false, // 去除warning警告
-                    dead_code: true, // 去除不可达代码
-                    pure_funcs: ['console.log'], // 配置发布时，不被打包的函数
-                    drop_debugger: true, // 发布时去除debugger
+            }),
+            new webpack.HashedModuleIdsPlugin(), // NamedModulesPlugin
+            // new InlineManifestWebpackPlugin('chunk-manifest.json'),// 重命名 manifest json
+        ]
+    });
+
+    rm(distPath, async function(err) {
+        if (!err) {
+            spinner.succeed('cleaned dist folder success');
+
+            spinner.text = 'building';
+            spinner.start();
+
+            webpack(webpackConfig, function(err, status) {
+                if (!err) {
+                    spinner.succeed(`build dist success. the output path:${distPath}`);
                 }
-            }
-        }),
-    ]
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-        'process.env': 'prod',
-        IS_DEV: JSON.stringify(false),
-    }),
-    new webpack.HashedModuleIdsPlugin(),
-    new WebpackChunkHash(),
-    // new ChunkManifestPlugin({
-    //   filename: "chunk-manifest.json",
-    //   manifestVariable: "webpackManifest"
-    // }),
-    new HtmlWebpackPlugin({
-       chunks: ['app'],//限定entry特定的块
-       excludeChunks: ['dev-helper'], //排除entry特定的块
-       filename: 'index.html',
-       inject: true,
-       hash: true,
-       mountPoint: '<div id="root"></div>',
-       // value: '23',
-       template: path.resolve('.', 'public', 'index.html')  // 模板
+            })
+        } else {
+            spinner.fail('rm dist error');
+        }
     })
-  ],
-};
+}
 
-// const spinner = ora('start building');
-
-spinner.text = 'cleaning dist folder';
-
-rm('../dist', function(err) {
-  if (!err) {
-    spinner.succeed('cleaned dist folder success');
-
-	spinner.text = 'building';
-	spinner.start();
-
-    webpack(webpackConfig, function(err, status) {
-		// console.log(err, status);
-      if (!err) {
-		  spinner.succeed(`build dist success. the output path:${path.resolve(__dirname, '..', 'dist')}`);
-      }
-    })
-  } else {
-    spinner.fail('rm dist error');
-  }
-})
-module.exports = webpackConfig;
+module.exports = renderWebpack;
