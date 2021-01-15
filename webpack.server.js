@@ -3,6 +3,8 @@ var fs = require('fs')
 var {
     getRule
 } = require("./lib/rule.js");
+var child_process = require('child_process');
+
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
@@ -10,9 +12,27 @@ const {
     CheckerPlugin
 } = require('awesome-typescript-loader');
 
-
 const tsLoader = process.argv.includes('ts-loader');
 const modelPath = path.resolve(__dirname, '..', 'src', 'models');
+
+let tm2 = null;
+
+fs.watch(modelPath, function (event, filename) {
+  if(event === 'rename') {
+    clearTimeout(tm2);
+    tm2 = setTimeout(function() {
+      // When NodeJS exits
+      process.on("exit", function () {
+        require("child_process").spawn(process.argv.shift(), process.argv, {
+            cwd: process.cwd(),
+            detached : true,
+            stdio: "inherit"
+        });
+      });
+      process.exit();
+    }, 1000);
+  } 
+});
 
 function getModel(modelPath) {
     var models = [];
@@ -22,7 +42,7 @@ function getModel(modelPath) {
             if (err) {
                 resolve([]);
             }
-            files.forEach(function(filename) {
+            files.filter(fileName => fileName.indexOf('d.ts') < 0).forEach(function(filename) {
                 const res = filename.split(".");
                 models.push(res[0]);
             });
@@ -30,17 +50,29 @@ function getModel(modelPath) {
         });
     })
 }
-console.log(path.resolve(__dirname, '..', 'src', "utils/"));
+
 async function renderWebpack() {
     var webpack = require("webpack");
 
     const models = await getModel(modelPath);
     var webpack = {
+        stats: { 
+          children: false,
+          chunks: false,
+          hash: false,
+          warnings: false,
+          builtAt: false,
+          modules: false,
+          timings: false,
+          assets: false,
+          entrypoints: false,
+        },
         mode: "development",
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             alias: {
                 '@src': path.resolve(__dirname, '..', "src/"),
+                '@layouts': path.resolve(__dirname, '..', "src", 'layouts/'),
                 '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
                 '@components': path.resolve(__dirname, '..', 'src', "components/"),
                 '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
@@ -106,7 +138,7 @@ async function renderWebpack() {
                 hash: true,
                 mountPoint: '<div id="root"></div>',
                 // value: '23',
-                template: path.resolve('.', 'public', 'index.html') // 模板
+                template: path.resolve('.', 'public', 'document.ejs') // 模板
             })
         ],
         devServer: {

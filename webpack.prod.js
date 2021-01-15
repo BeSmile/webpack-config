@@ -18,15 +18,15 @@ var webpackConfig = {
   resolve: {
     extensions: ['.js', '.jsx', '.json'],
 	alias: {
-	  '@src': path.resolve(__dirname, '..', "src/"),
-	  '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
-	  '@components': path.resolve(__dirname, '..', 'src', "components/"),
-	  '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
-	  '@public': path.resolve(__dirname, '..', "public/"),
-	},
+    '@src': path.resolve(__dirname, '..', "src/"),
+    '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
+    '@layouts': path.resolve(__dirname, '..', 'src', "layouts/"),
+    '@components': path.resolve(__dirname, '..', 'src', "components/"),
+    '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
+    '@public': path.resolve(__dirname, '..', "public/")
   },
   entry: {
-	app: path.resolve(__dirname, '..', 'src','index.js')
+	  app: path.resolve(__dirname, '..', 'src','index.js')
   },
   output: {
       path: path.resolve(__dirname, '..', 'dist'), // 输出的路径
