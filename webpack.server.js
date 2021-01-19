@@ -7,6 +7,7 @@ var child_process = require('child_process');
 
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const {
     CheckerPlugin
@@ -17,22 +18,22 @@ const modelPath = path.resolve(__dirname, '..', 'src', 'models');
 
 let tm2 = null;
 
-fs.watch(modelPath, function (event, filename) {
-  if(event === 'rename') {
-    clearTimeout(tm2);
-    tm2 = setTimeout(function() {
-      // When NodeJS exits
-      process.on("exit", function () {
-        require("child_process").spawn(process.argv.shift(), process.argv, {
-            cwd: process.cwd(),
-            detached : true,
-            stdio: "inherit"
-        });
-      });
-      process.exit();
-    }, 1000);
-  } 
-});
+// fs.watch(modelPath, function (event, filename) {
+//   if(event === 'rename') {
+//     clearTimeout(tm2);
+//     tm2 = setTimeout(function() {
+//       // When NodeJS exits
+//       process.on("exit", function () {
+//         require("child_process").spawn(process.argv.shift(), process.argv, {
+//             cwd: process.cwd(),
+//             detached : true,
+//             stdio: "inherit"
+//         });
+//       });
+//       process.exit();
+//     }, 1000);
+//   } 
+// });
 
 function getModel(modelPath) {
     var models = [];
@@ -53,8 +54,8 @@ function getModel(modelPath) {
 
 async function renderWebpack() {
     var webpack = require("webpack");
-
     const models = await getModel(modelPath);
+    console.log(path.resolve(__dirname, '..', "src", 'tsconfig.json'));
     var webpack = {
         stats: { 
           children: false,
@@ -71,14 +72,27 @@ async function renderWebpack() {
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
             alias: {
-                '@src': path.resolve(__dirname, '..', "src/"),
-                '@layouts': path.resolve(__dirname, '..', "src", 'layouts/'),
-                '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
-                '@components': path.resolve(__dirname, '..', 'src', "components/"),
-                '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
-                '@utils': path.resolve(__dirname, '..', 'src', "utils/"),
-                '@public': path.resolve(__dirname, '..', "public/"),
+                '@src': path.resolve(__dirname, '..', "src"),
+                '@layouts': path.resolve(__dirname, '..', "src", 'layouts'),
+                '@pages': path.resolve(__dirname, '..', 'src', "pages"),
+                '@components': path.resolve(__dirname, '..', 'src', "components"),
+                '@services': path.resolve(__dirname, '..', 'src', "services"),
+                '@assets': path.resolve(__dirname, "../src/assets"),
+                '@atom': path.resolve(__dirname, '..', 'src', "atom"),
+                '@utils': path.resolve(__dirname, '..', 'src', "utils"),
+                '@models': path.resolve(__dirname, '..', 'src', "models"),
+                '@public': path.resolve(__dirname, '..', "public"),
             },
+
+            // plugins: [
+            //   new TsconfigPathsPlugin({
+            //     configFile: path.resolve(__dirname, '..', 'tsconfig.json'),
+            //     logLevel: "info",
+            //     extensions: [".ts", ".tsx"],
+            //     mainFields: ["browser", "main"],
+            //     // baseUrl: "/foo"
+            //   })
+            // ]
         },
         entry: {
             app: path.resolve(__dirname, '..', 'src', tsLoader ? 'index.tsx' : 'index.js')
