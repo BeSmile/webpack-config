@@ -3,19 +3,18 @@ var fs = require('fs')
 var {
     getRule
 } = require("./lib/rule.js");
-var child_process = require('child_process');
+// var child_process = require('child_process');
 
 var HtmlWebpackPlugin = require("html-webpack-plugin");
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+// const ExtractTextPlugin = require("extract-text-webpack-plugin");
+// const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 const {
     CheckerPlugin
 } = require('awesome-typescript-loader');
-
+var config = require('../.gents.ts');
 const tsLoader = process.argv.includes('ts-loader');
 const modelPath = path.resolve(__dirname, '..', 'src', 'models');
-
 let tm2 = null;
 
 // fs.watch(modelPath, function (event, filename) {
@@ -55,7 +54,6 @@ function getModel(modelPath) {
 async function renderWebpack() {
     var webpack = require("webpack");
     const models = await getModel(modelPath);
-    console.log(path.resolve(__dirname, '..', "src", 'tsconfig.json'));
     var webpack = {
         stats: { 
           children: false,
@@ -71,19 +69,19 @@ async function renderWebpack() {
         mode: "development",
         resolve: {
             extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
-            alias: {
-                '@src': path.resolve(__dirname, '..', "src"),
-                '@layouts': path.resolve(__dirname, '..', "src", 'layouts'),
-                '@pages': path.resolve(__dirname, '..', 'src', "pages"),
-                '@components': path.resolve(__dirname, '..', 'src', "components"),
-                '@services': path.resolve(__dirname, '..', 'src', "services"),
-                '@assets': path.resolve(__dirname, "../src/assets"),
-                '@atom': path.resolve(__dirname, '..', 'src', "atom"),
-                '@utils': path.resolve(__dirname, '..', 'src', "utils"),
-                '@models': path.resolve(__dirname, '..', 'src', "models"),
-                '@public': path.resolve(__dirname, '..', "public"),
-            },
-
+            // alias: {
+            //     '@src': path.resolve(__dirname, '..', "src"),
+            //     '@layouts': path.resolve(__dirname, '..', "src", 'layouts'),
+            //     '@pages': path.resolve(__dirname, '..', 'src', "pages"),
+            //     '@components': path.resolve(__dirname, '..', 'src', "components"),
+            //     '@services': path.resolve(__dirname, '..', 'src', "services"),
+            //     '@assets': path.resolve(__dirname, "../src/assets"),
+            //     '@atom': path.resolve(__dirname, '..', 'src', "atom"),
+            //     '@utils': path.resolve(__dirname, '..', 'src', "utils"),
+            //     '@models': path.resolve(__dirname, '..', 'src', "models"),
+            //     '@public': path.resolve(__dirname, '..', "public"),
+            // },
+            alias: config.alias,
             // plugins: [
             //   new TsconfigPathsPlugin({
             //     configFile: path.resolve(__dirname, '..', 'tsconfig.json'),

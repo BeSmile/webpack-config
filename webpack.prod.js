@@ -22,6 +22,7 @@ var webpackConfig = {
     '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
     '@layouts': path.resolve(__dirname, '..', 'src', "layouts/"),
     '@components': path.resolve(__dirname, '..', 'src', "components/"),
+    '@assets': path.resolve(__dirname, '..', 'src', "assets/"),
     '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
     '@public': path.resolve(__dirname, '..', "public/")
   },
