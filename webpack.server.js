@@ -1,11 +1,7 @@
-var path = require("path");
-var fs = require('fs')
-var rules = require('./lib/rule.js');
-var getPlugins = require('./lib/plugins');
-
+const path = require("path");
+const rules = require('./lib/rule.js');
+const getPlugins = require('./lib/plugins');
 // var child_process = require('child_process');
-
-var HtmlWebpackPlugin = require("html-webpack-plugin");
 // const ExtractTextPlugin = require("extract-text-webpack-plugin");
 // const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
@@ -42,7 +38,6 @@ const modelPath = path.resolve(__dirname, '..', 'src', 'models');
 //   } 
 // });
 
-console.log(path.join(__dirname, '..', "public"));
 
 // 生成webpack文件
 async function renderWebpack() {
@@ -71,6 +66,7 @@ async function renderWebpack() {
         output: {
             path: path.resolve(__dirname, '.', 'dist'), // 输出的路径
             filename: '[name]-[chunkhash].js',
+            publicPath: '/',
             // publicPath: path.resolve(__dirname, '..', 'public'),
             library: 'APP',
             libraryTarget: 'window',
@@ -89,29 +85,13 @@ async function renderWebpack() {
           rules: rules,
         },
         target: 'web',
-        // plugins: [
-        //     new webpack.DefinePlugin({
-        //         ENV_PATH: JSON.stringify(false),
-        //         MODELS_PATH: JSON.stringify(models),
-        //     }),
-        //     // new CheckerPlugin(),
-        //     new HtmlWebpackPlugin({
-        //         chunks: ['app'], //限定entry特定的块
-        //         excludeChunks: ['dev-helper'], //排除entry特定的块
-        //         filename: 'index.html',
-        //         inject: true,
-        //         hash: true,
-        //         mountPoint: '<div id="root"></div>',
-        //         // value: '23',
-        //         template: path.resolve('.', 'public', 'document.ejs') // 模板
-        //     })
-        // ],
         plugins: plugins,
         devServer: {
             host:'127.0.0.1',
             contentBase: path.join(__dirname, '..', "public"),// 用于指定资源目录
             compress: true,
             port: 9000,
+            historyApiFallback: true,
             clientLogLevel: 'silent',
             // before: function (app, server, compiler) {
             //   app.get('/some/path', function (req, res) {

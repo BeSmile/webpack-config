@@ -1,124 +1,98 @@
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
-var HtmlWebpackPlugin = require("html-webpack-plugin");
-var WebpackChunkHash = require("webpack-chunk-hash");
-var rules = require("./lib/rule.js");
-var webpack = require("webpack");
-const chalk = require('chalk');
-var path = require("path");
-var rm = require("rimraf");
-const ora = require('ora');
+const path = require("path");
+const rules = require('./lib/rule.js');
+const getPlugins = require('./lib/plugins');
+// var child_process = require('child_process');
+// const ExtractTextPlugin = require("extract-text-webpack-plugin");
+// const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
-const spinner = new ora({
-	text: 'start building',
-	spinner: process.argv[2]
-});
+const {
+    CheckerPlugin
+} = require('awesome-typescript-loader');
 
-var webpackConfig = {
-  mode: "production",
-  resolve: {
-    extensions: ['.js', '.jsx', '.json'],
-	alias: {
-    '@src': path.resolve(__dirname, '..', "src/"),
-    '@pages': path.resolve(__dirname, '..', 'src', "pages/"),
-    '@layouts': path.resolve(__dirname, '..', 'src', "layouts/"),
-    '@components': path.resolve(__dirname, '..', 'src', "components/"),
-    '@assets': path.resolve(__dirname, '..', 'src', "assets/"),
-    '@atom': path.resolve(__dirname, '..', 'src', "atom/"),
-    '@public': path.resolve(__dirname, '..', "public/")
-  },
-  entry: {
-	  app: path.resolve(__dirname, '..', 'src','index.js')
-  },
-  output: {
-      path: path.resolve(__dirname, '..', 'dist'), // 输出的路径
-      filename: '[name]-[chunkhash].js',
-      // publicPath: "/assets/",
-      library: 'APP',
-      libraryTarget: 'window',
-  },
+var config = {};
 
-  devtool: 'source-map',
-  module: {
-    rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: {
-          loader: "babel-loader"
-        }
-      },
-      ...rules,
-      // {
-      //   test: /\.html$/,
-      //   use: [
-      //     {
-      //       loader: "html-loader"
-      //     }
-      //   ]
-      // }
-    ]
-  },
-  target: "web",
-  optimization: {
-     minimizer: [
-        new UglifyJSPlugin({
-            uglifyOptions: {
-                output: {
-                    comments: false
-                },
-                compress: {
-                    // warnings: false, // 去除warning警告
-                    dead_code: true, // 去除不可达代码
-                    pure_funcs: ['console.log'], // 配置发布时，不被打包的函数
-                    drop_debugger: true, // 发布时去除debugger
-                }
+if (process.env.NODE_MODE !== 'plugin') {
+  config = require('../.gents.ts');
+}
+
+
+// var config = require('../.gents.ts');
+const tsLoader = process.env.NODE_TS;
+const modelPath = path.resolve(__dirname, '..', 'src', 'models');
+
+
+// fs.watch(modelPath, function (event, filename) {
+//   if(event === 'rename') {
+//     clearTimeout(tm2);
+//     tm2 = setTimeout(function() {
+//       // When NodeJS exits
+//       process.on("exit", function () {
+//         require("child_process").spawn(process.argv.shift(), process.argv, {
+//             cwd: process.cwd(),
+//             detached : true,
+//             stdio: "inherit"
+//         });
+//       });
+//       process.exit();
+//     }, 1000);
+//   } 
+// });
+
+console.log(path.resolve('dist'), path.resolve('src',tsLoader ? 'index.tsx' : 'index.js'));
+
+// 生成webpack文件
+async function renderWebpack() {
+    var webpack = require("webpack");
+    const plugins = await getPlugins();
+
+    var webpack = {
+        stats: "none",// 错误提示
+        mode: "production",
+        resolve: {
+            extensions: ['.js', '.jsx','.ts', '.tsx',  '.json'],
+            alias: config.alias,
+            // plugins: [
+            //   new TsconfigPathsPlugin({
+            //     configFile: path.resolve(__dirname, '..', 'tsconfig.json'),
+            //     logLevel: "info",
+            //     extensions: [".ts", ".tsx"],
+            //     mainFields: ["browser", "main"],
+            //     // baseUrl: "/foo"
+            //   })
+            // ]
+        },
+        entry: {
+          app: path.resolve('src',tsLoader ? 'index.tsx' : 'index.js'),
+        },
+        output: {
+            path: path.resolve('dist'), // 输出的路径
+            filename: '[name]-[chunkhash].js',
+            publicPath: '/',
+            // publicPath: path.resolve(__dirname, '..', 'public'),
+            library: 'APP',
+            libraryTarget: 'window',
+        },
+        // externals: {
+        //     "react": "React",
+        //     "react-dom": "ReactDOM"
+        // },
+        resolveLoader: {
+            alias: {
+                // "db-loader": path.resolve(__dirname, '.','babel-loader.js')
             }
-        }),
-    ]
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-        'process.env': 'prod',
-        IS_DEV: JSON.stringify(false),
-    }),
-    new webpack.HashedModuleIdsPlugin(),
-    new WebpackChunkHash(),
-    // new ChunkManifestPlugin({
-    //   filename: "chunk-manifest.json",
-    //   manifestVariable: "webpackManifest"
-    // }),
-    new HtmlWebpackPlugin({
-       chunks: ['app'],//限定entry特定的块
-       excludeChunks: ['dev-helper'], //排除entry特定的块
-       filename: 'index.html',
-       inject: true,
-       hash: true,
-       mountPoint: '<div id="root"></div>',
-       // value: '23',
-       template: path.resolve('.', 'public', 'index.html')  // 模板
-    })
-  ],
-};
+        },
+        // devtool: 'eval-source-map',
+        module: {
+          rules: rules,
+        },
+        target: 'web',
+        plugins: plugins,
+        // externals: {
+        //     "react": 'react',
+        //     'react-dom': 'ReactDOM'
+        // }
+    };
+    return webpack;
+}
 
-// const spinner = ora('start building');
-
-spinner.text = 'cleaning dist folder';
-
-rm('../dist', function(err) {
-  if (!err) {
-    spinner.succeed('cleaned dist folder success');
-
-	spinner.text = 'building';
-	spinner.start();
-
-    webpack(webpackConfig, function(err, status) {
-		// console.log(err, status);
-      if (!err) {
-		  spinner.succeed(`build dist success. the output path:${path.resolve(__dirname, '..', 'dist')}`);
-      }
-    })
-  } else {
-    spinner.fail('rm dist error');
-  }
-})
-module.exports = webpackConfig;
+module.exports = renderWebpack;
