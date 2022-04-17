@@ -99,10 +99,9 @@ async function renderWebpack() {
             //   });
             // }
         },
-        // externals: {
-        //     "react": 'react',
-        //     'react-dom': 'ReactDOM'
-        // }
+        externals: {
+            "markdown-it": 'markdownIt',
+        }
     };
     return webpack;
 }
